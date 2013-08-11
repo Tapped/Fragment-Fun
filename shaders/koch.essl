@@ -1,0 +1,223 @@
+/* 
+ * I used http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm for finding geometry functions.
+ * I also used https://www.shadertoy.com/view/4ssGzS for inspiration.
+ * Made by Emil Sandstø
+ */
+
+#define MAX_RAYMARCH_ITER 128
+#define PI 3.14159265359
+#define MAX_SPHERE_FLAKE_ITER 4
+
+#define SPHEREFLAKE 1.0
+
+const float precis = 0.001;
+
+//Find the shortest distance from a point to a point in the sphere.
+float sdSphere(vec3 p, float s)
+{
+	return length(p) - s;
+}
+
+vec3 rotateX(in vec3 p, float a) {
+	float c = cos(a); float s = sin(a);
+	return vec3(p.x, c * p.y - s * p.z, s * p.y + c * p.z);
+}
+
+vec3 rotateY(vec3 p, float a) {
+	float c = cos(a); float s = sin(a);
+	return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
+}
+
+vec3 rotateZ(vec3 p, float a) {
+	float c = cos(a); float s = sin(a);
+	return vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z);
+}
+
+// Setup a rotation matrix from an arbitrary axis.
+// Axis must be a unit vector.
+mat3 setupRotate(vec3 axis, float theta)
+{
+	float s = sin(theta);
+	float c = cos(theta);
+
+	float a = 1.0 - c;
+	float ax = a * axis.x;
+	float ay = a * axis.y;
+	float az = a * axis.z;
+
+	return mat3(ax*axis.x + c, ax*axis.y + axis.z*s, ax*axis.z - axis.y*s,
+				ay*axis.x - axis.z*s, ay*axis.y + c, ay*axis.z + axis.x*s,
+				az*axis.x + axis.y*s, az*axis.y - axis.x*s, az*axis.z + c);
+}
+
+vec3 rotateCamera(vec3 ray_start, vec3 ray_dir, vec3 cameraTarget) 
+{
+	ray_dir.x = ray_dir.x;
+	vec3 target = normalize(cameraTarget - ray_start);
+	float angY = atan(target.z, target.x);
+	ray_dir = rotateY(ray_dir, PI/2.0 - angY);
+	float angX = atan(target.y, target.z);
+	ray_dir = rotateX(ray_dir, -angX);
+	return ray_dir;
+}
+
+vec2 mapSphereFlake(vec3 p, out vec3 finalP)
+{
+	mat3 rotMat = setupRotate(vec3(0.0, 1.0, 0.0), iGlobalTime * 0.5);
+	p = rotMat * p;
+	
+	float currentRadius = 45.0;
+	vec2 result = vec2(SPHEREFLAKE, sdSphere(p, currentRadius));
+	finalP = p;
+	
+	float finalRadius = currentRadius;
+	for(int i = 0;i < MAX_SPHERE_FLAKE_ITER;i++)
+	{
+		currentRadius /= 3.0;
+		
+		//It was faster to unroll the loop on my AMD Radeon HD 7970.
+		//But I still gets around 20 FPS.
+		vec3 pos;
+		pos = vec3(finalRadius, 0.0, 0.0);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+
+		pos = vec3(-finalRadius, 0.0, 0.0);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+
+		pos = vec3(0.0, finalRadius, 0.0);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+
+		pos = vec3(0.0, -finalRadius, 0.0);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+
+		pos = vec3(0.0, 0.0, finalRadius);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+
+		pos = vec3(0.0, 0.0, -finalRadius);
+		pos += p;
+			
+		result.y = min(result.y, sdSphere(pos + vec3(currentRadius, 0.0, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(-currentRadius, 0.0, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, currentRadius, 0.0), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, -currentRadius, 0.0), currentRadius));
+
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, currentRadius), currentRadius));
+		result.y = min(result.y, sdSphere(pos + vec3(0.0, 0.0, -currentRadius), currentRadius));
+		
+		finalRadius += currentRadius * 2.0;
+	}
+
+	result.y += sin(2.0 * p.x) * sin(2.0 * p.y) * sin(2.0 * p.z);
+	
+	return result;
+}
+
+// Find the intersection points between the rays and objects in our scene, so that we can shade them.
+// The x coordinate of the returned vector corresponds to the object type.
+vec2 mapScene(vec3 p, out vec3 finalP)
+{
+	return mapSphereFlake(p, finalP);
+}
+
+// Returns the type of object hit.
+float rayMarch(vec3 rayStart, vec3 rayDir, out float dist, out vec3 currentRayPos, out vec3 finalRayPos, out int iterations)
+{
+	dist = 0.0;
+	vec2 mapDist;
+
+	for(int i = 0;i < MAX_RAYMARCH_ITER;i++)
+	{
+		currentRayPos = rayStart + rayDir * dist;
+		mapDist = mapScene(currentRayPos, finalRayPos);
+		if(mapDist.y < precis)
+		{
+			iterations = i;
+			return mapDist.x;
+		}
+		dist += mapDist.y;
+	}
+
+	return -1.;
+}
+
+vec3 moveCamera(vec3 ray_start) 
+{
+	ray_start += vec3(0.0, 0.0, -400.);
+	return ray_start;
+}
+
+vec4 render(vec3 screen)
+{	
+	vec4 outColor = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 diffColor = vec4(1.0, 1.0, 1.0, 1.0);
+	vec3 rayOrigin = vec3(0.0, 0.0, -2.0);
+	vec3 rayStart = moveCamera(rayOrigin);
+
+	vec3 cameraTarget = vec3(0.0, 0.0, -1.0); 
+	vec3 rayDir = rotateCamera(rayOrigin, normalize(screen - rayOrigin), cameraTarget);
+	
+	float dist;
+	vec3 rayPos;
+	vec3 finalRayPos;
+	int iterations;
+	float objectID = rayMarch(rayStart, rayDir, dist, rayPos, finalRayPos, iterations);
+
+	if(objectID > 0.0)
+	{
+		outColor = vec4(0.0, float(iterations) / 32.0, abs(rayPos.x) / 80.0 + abs(rayPos.y) / 120.0 - 0.4, 1.0);
+	}
+	
+	return outColor;
+}
+
+void main(void)
+{
+	vec2 uv = vec2((gl_FragCoord.x - iResolution.x *.5) / iResolution.y, (gl_FragCoord.y - iResolution.y *.5) / iResolution.y);
+	gl_FragColor = render(vec3(uv, 0.0));
+}

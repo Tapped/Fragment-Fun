@@ -1,0 +1,18 @@
+#define PI (3.141592653589793238462643383)
+#define SPEED (0.09)
+
+void main(void)
+{
+	//abs(sin(iGlobalTime * PI * SPEED))+0.2
+	vec2 cameraDir = vec2(0.5, 0.9);
+	vec2 cameraPos = vec2(sin(iGlobalTime * PI * SPEED), cos(iGlobalTime * PI * SPEED))*10.0;
+	
+	vec2 uv = ((gl_FragCoord.xy / iResolution.xy) - cameraDir) * 2.5;
+	uv.x = 1.0 - (1.0 / uv.x);
+	uv.y = uv.y;
+
+	vec2 projectedUV = vec2((uv.x / uv.y) * 2.0, 1.0 / uv.y);
+	projectedUV += cameraPos;
+
+	gl_FragColor = texture2D(iChannel0, fract(projectedUV)) * -uv.y;
+}
