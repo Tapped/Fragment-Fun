@@ -42,8 +42,14 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.mipMapCheckBox = new System.Windows.Forms.CheckBox();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.minFilterBox = new System.Windows.Forms.ComboBox();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.texWrapRBox = new System.Windows.Forms.ComboBox();
+            this.texWrapTBox = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.texWrapSBox = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.fileName = new System.Windows.Forms.TextBox();
             this.flowLayoutPanel1.SuspendLayout();
@@ -53,7 +59,7 @@
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.groupBox6.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -204,7 +210,9 @@
             // 
             // groupBox6
             // 
-            this.groupBox6.Controls.Add(this.panel1);
+            this.groupBox6.Controls.Add(this.minFilterBox);
+            this.groupBox6.Controls.Add(this.panel2);
+            this.groupBox6.Controls.Add(this.label1);
             this.groupBox6.Controls.Add(this.fileName);
             this.groupBox6.Controls.Add(this.mipMapCheckBox);
             this.groupBox6.Location = new System.Drawing.Point(12, 407);
@@ -213,15 +221,6 @@
             this.groupBox6.TabIndex = 1;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Texture options";
-            // 
-            // panel1
-            // 
-            this.panel1.Controls.Add(this.minFilterBox);
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Location = new System.Drawing.Point(6, 82);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(166, 73);
-            this.panel1.TabIndex = 2;
             // 
             // minFilterBox
             // 
@@ -233,16 +232,101 @@
             "Linear Mipmap Nearest",
             "Nearest Mipmap Linear",
             "Linear Mipmap Linear"});
-            this.minFilterBox.Location = new System.Drawing.Point(0, 20);
+            this.minFilterBox.Location = new System.Drawing.Point(6, 109);
             this.minFilterBox.Name = "minFilterBox";
             this.minFilterBox.Size = new System.Drawing.Size(166, 21);
             this.minFilterBox.TabIndex = 1;
             this.minFilterBox.SelectionChangeCommitted += new System.EventHandler(this.minFilterBox_SelectionChangeCommitted);
             // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.texWrapRBox);
+            this.panel2.Controls.Add(this.texWrapTBox);
+            this.panel2.Controls.Add(this.label4);
+            this.panel2.Controls.Add(this.label3);
+            this.panel2.Controls.Add(this.texWrapSBox);
+            this.panel2.Controls.Add(this.label2);
+            this.panel2.Location = new System.Drawing.Point(192, 9);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(200, 140);
+            this.panel2.TabIndex = 3;
+            // 
+            // texWrapRBox
+            // 
+            this.texWrapRBox.FormattingEnabled = true;
+            this.texWrapRBox.Items.AddRange(new object[] {
+            "Clamp",
+            "Repeat",
+            "ClampToBorder",
+            "ClampToEdge",
+            "MirroreredRepeat"});
+            this.texWrapRBox.Location = new System.Drawing.Point(3, 100);
+            this.texWrapRBox.Name = "texWrapRBox";
+            this.texWrapRBox.Size = new System.Drawing.Size(163, 21);
+            this.texWrapRBox.TabIndex = 9;
+            this.texWrapRBox.SelectionChangeCommitted += new System.EventHandler(this.texWrapRBox_SelectionChangeCommitted);
+            // 
+            // texWrapTBox
+            // 
+            this.texWrapTBox.FormattingEnabled = true;
+            this.texWrapTBox.Items.AddRange(new object[] {
+            "Clamp",
+            "Repeat",
+            "ClampToBorder",
+            "ClampToEdge",
+            "MirroreredRepeat"});
+            this.texWrapTBox.Location = new System.Drawing.Point(3, 60);
+            this.texWrapTBox.Name = "texWrapTBox";
+            this.texWrapTBox.Size = new System.Drawing.Size(163, 21);
+            this.texWrapTBox.TabIndex = 8;
+            this.texWrapTBox.SelectionChangeCommitted += new System.EventHandler(this.texWrapTBox_SelectionChangeCommitted);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(3, 84);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(83, 13);
+            this.label4.TabIndex = 7;
+            this.label4.Text = "Texture Wrap R";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(3, 44);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(82, 13);
+            this.label3.TabIndex = 5;
+            this.label3.Text = "Texture Wrap T";
+            // 
+            // texWrapSBox
+            // 
+            this.texWrapSBox.FormattingEnabled = true;
+            this.texWrapSBox.Items.AddRange(new object[] {
+            "Clamp",
+            "Repeat",
+            "ClampToBorder",
+            "ClampToEdge",
+            "MirroreredRepeat"});
+            this.texWrapSBox.Location = new System.Drawing.Point(3, 20);
+            this.texWrapSBox.Name = "texWrapSBox";
+            this.texWrapSBox.Size = new System.Drawing.Size(163, 21);
+            this.texWrapSBox.TabIndex = 4;
+            this.texWrapSBox.SelectionChangeCommitted += new System.EventHandler(this.texWrapSBox_SelectionChangeCommitted);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(3, 4);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(82, 13);
+            this.label2.TabIndex = 0;
+            this.label2.Text = "Texture Wrap S";
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(1, 4);
+            this.label1.Location = new System.Drawing.Point(6, 93);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(88, 13);
             this.label1.TabIndex = 0;
@@ -274,8 +358,8 @@
             this.groupBox5.ResumeLayout(false);
             this.groupBox6.ResumeLayout(false);
             this.groupBox6.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -297,8 +381,14 @@
         private System.Windows.Forms.CheckBox mipMapCheckBox;
         private System.Windows.Forms.GroupBox groupBox6;
         private System.Windows.Forms.TextBox fileName;
-        private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox minFilterBox;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ComboBox texWrapSBox;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.ComboBox texWrapRBox;
+        private System.Windows.Forms.ComboBox texWrapTBox;
     }
 }

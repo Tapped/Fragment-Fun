@@ -26,6 +26,18 @@ namespace FragmentFun
             InitializeComponent();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+
+            if (e.CloseReason == CloseReason.WindowsShutDown) return;
+
+            // We don't want to dispose.
+            e.Cancel = true;
+
+            Hide();
+        }
+
         private int MapMinFilterToBox(int filter)
         {
             switch(filter)
@@ -43,7 +55,7 @@ namespace FragmentFun
                 case (int)TextureMinFilter.LinearMipmapLinear:
                     return 5;
                 default:
-                    return 0;
+                    return -1;
             }
         }
 
@@ -65,6 +77,44 @@ namespace FragmentFun
                     return (int)TextureMinFilter.LinearMipmapLinear;
                 default:
                     return (int)TextureMinFilter.Linear;
+            }
+        }
+
+        private int MapBoxToTexWrap(int selection)
+        {
+            switch (selection)
+            {
+                case 0:
+                    return (int)TextureWrapMode.Clamp;
+                case 1:
+                    return (int)TextureWrapMode.Repeat;
+                case 2:
+                    return (int)TextureWrapMode.ClampToBorder;
+                case 3:
+                    return (int)TextureWrapMode.ClampToEdge;
+                case 4:
+                    return (int)TextureWrapMode.MirroredRepeat;
+                default:
+                    return (int)TextureWrapMode.Clamp;
+            }
+        }
+
+        private int MapTexWrapToBox(int texWrap)
+        {
+            switch (texWrap)
+            {
+                case (int)TextureWrapMode.Clamp:
+                    return 0;
+                case (int)TextureWrapMode.Repeat:
+                    return 1;
+                case (int)TextureWrapMode.ClampToBorder:
+                    return 2;
+                case (int)TextureWrapMode.ClampToEdge:
+                    return 3;
+                case (int)TextureWrapMode.MirroredRepeat:
+                    return 4;
+                default:
+                    return -1;
             }
         }
 
@@ -117,13 +167,27 @@ namespace FragmentFun
                     fileName.Text += '\"' + mFileNames[channel][i] + "\" ";
                 }
             }
-            
+
+            if (fileName.Text == "")
+            {
+                fileName.Text = "Filename";
+            }
+
             TextureTarget texTarget = MainView.mTextureTypes[channel];
             GL.BindTexture(texTarget, MainView.mTextureObjects[channel]);
             
             int param;
             GL.GetTexParameter(texTarget, GetTextureParameter.TextureMinFilter, out param);
             minFilterBox.SelectedIndex = MapMinFilterToBox(param);
+
+            GL.GetTexParameter(texTarget, GetTextureParameter.TextureWrapS, out param);
+            texWrapSBox.SelectedIndex = MapTexWrapToBox(param);
+
+            GL.GetTexParameter(texTarget, GetTextureParameter.TextureWrapT, out param);
+            texWrapTBox.SelectedIndex = MapTexWrapToBox(param);
+
+            GL.GetTexParameter(texTarget, GetTextureParameter.TextureWrapR, out param);
+            texWrapRBox.SelectedIndex = MapTexWrapToBox(param);
 
             GL.BindTexture(texTarget, 0);
 
@@ -289,7 +353,48 @@ namespace FragmentFun
                                 TextureParameterName.TextureMinFilter, MapBoxToMinFilter(minFilterBox.SelectedIndex));
 
                 GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
+                mChannelSelected.Invalidate();
+            }
+        }
 
+        private void texWrapSBox_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (!mIsChannelChanging)
+            {
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], MainView.mTextureObjects[mChannelSelected.TabIndex]);
+
+                GL.TexParameter(MainView.mTextureTypes[mChannelSelected.TabIndex],
+                                TextureParameterName.TextureWrapS, MapBoxToTexWrap(texWrapSBox.SelectedIndex));
+
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
+                mChannelSelected.Invalidate();
+            }
+        }
+
+        private void texWrapTBox_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (!mIsChannelChanging)
+            {
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], MainView.mTextureObjects[mChannelSelected.TabIndex]);
+
+                GL.TexParameter(MainView.mTextureTypes[mChannelSelected.TabIndex],
+                                TextureParameterName.TextureWrapT, MapBoxToTexWrap(texWrapTBox.SelectedIndex));
+
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
+                mChannelSelected.Invalidate();
+            }
+        }
+
+        private void texWrapRBox_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (!mIsChannelChanging)
+            {
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], MainView.mTextureObjects[mChannelSelected.TabIndex]);
+
+                GL.TexParameter(MainView.mTextureTypes[mChannelSelected.TabIndex],
+                                TextureParameterName.TextureWrapR, MapBoxToTexWrap(texWrapRBox.SelectedIndex));
+
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
                 mChannelSelected.Invalidate();
             }
         }
