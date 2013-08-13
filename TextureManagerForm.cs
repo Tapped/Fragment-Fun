@@ -16,15 +16,63 @@ namespace FragmentFun
     public partial class TextureManagerForm : Form
     {
         bool mGLControlsLoaded = false;
+        GLControl mChannelSelected = null;
+        string[][] mFileNames = new string[MainView.NUM_TEXTURES][];
+        bool []mIsMipmapped = new bool[MainView.NUM_TEXTURES];
+        bool mIsChannelChanging = false;
 
         public TextureManagerForm()
         {
             InitializeComponent();
         }
 
+        private int MapMinFilterToBox(int filter)
+        {
+            switch(filter)
+            {
+                case (int)TextureMinFilter.Nearest:
+                    return 0;
+                case (int)TextureMinFilter.Linear:
+                    return 1;
+                case (int)TextureMinFilter.NearestMipmapNearest:
+                    return 2;
+                case (int)TextureMinFilter.LinearMipmapNearest:
+                    return 3;
+                case (int)TextureMinFilter.NearestMipmapLinear:
+                    return 4;
+                case (int)TextureMinFilter.LinearMipmapLinear:
+                    return 5;
+                default:
+                    return 0;
+            }
+        }
+
+        private int MapBoxToMinFilter(int selection)
+        {
+            switch (selection)
+            {
+                case 0:
+                    return (int)TextureMinFilter.Nearest;
+                case 1:
+                    return (int)TextureMinFilter.Linear;
+                case 2:
+                    return (int)TextureMinFilter.NearestMipmapNearest;
+                case 3:
+                    return (int)TextureMinFilter.LinearMipmapNearest;
+                case 4:
+                    return (int)TextureMinFilter.NearestMipmapLinear;
+                case 5:
+                    return (int)TextureMinFilter.LinearMipmapLinear;
+                default:
+                    return (int)TextureMinFilter.Linear;
+            }
+        }
+
         private void glControl_Load(object sender, EventArgs e)
         {
             mGLControlsLoaded = true;
+
+            mChannelSelected = glControl1;
 
             OpenTK.GLControl currentControl = (OpenTK.GLControl)sender;
 
@@ -57,15 +105,48 @@ namespace FragmentFun
             currentControl.Invalidate();
         }
 
+        private void UpdateOptions(int channel)
+        {
+            mIsChannelChanging = true;
+
+            fileName.Text = "";
+            if (mFileNames[channel] != null)
+            {
+                for (int i = 0; i < mFileNames[channel].Length; i++)
+                {
+                    fileName.Text += '\"' + mFileNames[channel][i] + "\" ";
+                }
+            }
+            
+            TextureTarget texTarget = MainView.mTextureTypes[channel];
+            GL.BindTexture(texTarget, MainView.mTextureObjects[channel]);
+            
+            int param;
+            GL.GetTexParameter(texTarget, GetTextureParameter.TextureMinFilter, out param);
+            minFilterBox.SelectedIndex = MapMinFilterToBox(param);
+
+            GL.BindTexture(texTarget, 0);
+
+            mipMapCheckBox.Checked = mIsMipmapped[channel];
+            mipMapCheckBox.Enabled = !mipMapCheckBox.Checked;
+
+            mIsChannelChanging = false;
+        }
+
         private void glControl_OnClick(object sender, EventArgs e)
         {
             OpenTK.GLControl currentControl = (OpenTK.GLControl)sender;
+            mChannelSelected = currentControl;
+            UpdateOptions(currentControl.TabIndex);
+        }
 
+        private void fileName_Click(object sender, EventArgs e)
+        {
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 if (openFileDialog1.FileNames.Length == 6)
                 {
-                    MessageBox.Show("You choose 6 images, so I will generate a cubemap of these images.");
+                    MessageBox.Show("6 images choosen, so I will generate a cubemap of these images.");
                 }
                 else if (openFileDialog1.FileNames.Length != 1)
                 {
@@ -73,12 +154,18 @@ namespace FragmentFun
                     return;
                 }
 
-                GL.DeleteTexture(MainView.mTextureObjects[currentControl.TabIndex]);
-                MainView.mTextureObjects[currentControl.TabIndex] = GL.GenTexture();
+                mFileNames[mChannelSelected.TabIndex] = new string[openFileDialog1.FileNames.Length];
+                for (int i = 0; i < openFileDialog1.FileNames.Length; i++)
+                {
+                    mFileNames[mChannelSelected.TabIndex][i] = System.IO.Path.GetFileName(openFileDialog1.FileNames[i]);
+                }
+
+                GL.DeleteTexture(MainView.mTextureObjects[mChannelSelected.TabIndex]);
+                MainView.mTextureObjects[mChannelSelected.TabIndex] = GL.GenTexture();
 
                 if (openFileDialog1.FileNames.Length == 1)
                 {
-                    GL.BindTexture(TextureTarget.Texture2D, MainView.mTextureObjects[currentControl.TabIndex]);
+                    GL.BindTexture(TextureTarget.Texture2D, MainView.mTextureObjects[mChannelSelected.TabIndex]);
 
                     Bitmap bitmap = new Bitmap(openFileDialog1.FileName);
                     BitmapData bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
@@ -93,11 +180,11 @@ namespace FragmentFun
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
                     GL.BindTexture(TextureTarget.Texture2D, 0);
-                    MainView.SetSamplerType(TextureTarget.Texture2D, currentControl.TabIndex);
+                    MainView.SetSamplerType(TextureTarget.Texture2D, mChannelSelected.TabIndex);
                 }
                 else
                 {
-                    GL.BindTexture(TextureTarget.TextureCubeMap, MainView.mTextureObjects[currentControl.TabIndex]);
+                    GL.BindTexture(TextureTarget.TextureCubeMap, MainView.mTextureObjects[mChannelSelected.TabIndex]);
 
                     GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
                     GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
@@ -166,10 +253,44 @@ namespace FragmentFun
                     bitmap.UnlockBits(bmpData);
 
                     GL.BindTexture(TextureTarget.TextureCubeMap, 0);
-                    MainView.SetSamplerType(TextureTarget.TextureCubeMap, currentControl.TabIndex);
+                    MainView.SetSamplerType(TextureTarget.TextureCubeMap, mChannelSelected.TabIndex);
                 }
 
-                currentControl.Invalidate();
+                mIsMipmapped[mChannelSelected.TabIndex] = false;
+                UpdateOptions(mChannelSelected.TabIndex);
+                mChannelSelected.Invalidate();
+            }
+        }
+
+        private void mipMapCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!mIsChannelChanging)
+            {
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], MainView.mTextureObjects[mChannelSelected.TabIndex]);
+
+                GL.Hint(HintTarget.GenerateMipmapHint, HintMode.Nicest);
+                GL.GenerateMipmap((GenerateMipmapTarget)MainView.mTextureTypes[mChannelSelected.TabIndex]);
+
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
+
+                mIsMipmapped[mChannelSelected.TabIndex] = true;
+                mipMapCheckBox.Enabled = false;
+                mChannelSelected.Invalidate();
+            }
+        }
+
+        private void minFilterBox_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (!mIsChannelChanging)
+            {
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], MainView.mTextureObjects[mChannelSelected.TabIndex]);
+
+                GL.TexParameter(MainView.mTextureTypes[mChannelSelected.TabIndex],
+                                TextureParameterName.TextureMinFilter, MapBoxToMinFilter(minFilterBox.SelectedIndex));
+
+                GL.BindTexture(MainView.mTextureTypes[mChannelSelected.TabIndex], 0);
+
+                mChannelSelected.Invalidate();
             }
         }
     }

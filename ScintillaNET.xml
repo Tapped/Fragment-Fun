@@ -29,7 +29,7 @@
         length normalize dot floor pow
         cross
       </Keywords>
-      <Keywords List="1">uniform if for while switch</Keywords>
+      <Keywords List="1">uniform if for while switch return</Keywords>
     </Lexer>
     <Styles>
       <Style Name="NUMBER" ForeColor="Goldenrod"/>

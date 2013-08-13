@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,7 +17,7 @@ namespace FragmentFun
 {
     public partial class MainView : Form
     {
-        static int NUM_TEXTURES = 5;
+        public static int NUM_TEXTURES = 5;
         
         public static int mListForQuad;
         public static int[] mTextureObjects = new int[NUM_TEXTURES];
@@ -55,6 +56,7 @@ void main()
             TOTAL
         };
 
+        Thread glViewThread;
         TextureManagerForm mTexManagerForm = null;
         Stopwatch mStopWatch = new Stopwatch();
         Stopwatch mFPSStopWatch = new Stopwatch();
