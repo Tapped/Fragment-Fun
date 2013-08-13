@@ -11,10 +11,14 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics;
 using OpenTK;
 
 namespace FragmentFun
 {
+    public delegate void FlushConsoleDelegate();
+    public delegate void WriteToConsoleDelegate(string strOut);
+
     public partial class MainView : Form
     {
         public static int NUM_TEXTURES = 5;
@@ -56,10 +60,11 @@ void main()
             TOTAL
         };
 
-        Thread glViewThread;
+        Thread compilerThread;
         TextureManagerForm mTexManagerForm = null;
         Stopwatch mStopWatch = new Stopwatch();
         Stopwatch mFPSStopWatch = new Stopwatch();
+        string mCopyOfFragmentShaderEdit;
         int mFrameCounter;
         double mFrameTimeAccum;
         double mAverageFrameTime;
@@ -105,7 +110,14 @@ void main()
 
         private void WriteToConsole(string strOut)
         {
-            console.Text += strOut;
+            if (console.InvokeRequired)
+            {
+                BeginInvoke(new WriteToConsoleDelegate(WriteToConsole), new object[]{strOut});
+            }
+            else
+            {
+                console.Text += strOut;
+            }
         }
 
         private bool CompileShader(int shader, string shaderSource)
@@ -188,6 +200,7 @@ void main()
 
             GL.CallList(mListForQuad);
 
+            GL.UseProgram(0);
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
             glControl1.SwapBuffers();
@@ -216,12 +229,12 @@ void main()
             CompileShader(mVertexShader, mVertexSource);
 
             mFragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            fragmentSourceEdit.Text = mFragmentSource;
 
             mProgram = GL.CreateProgram();
             GL.AttachShader(mProgram, mVertexShader);
             GL.AttachShader(mProgram, mFragmentShader);
-            LinkProgram();
+
+            fragmentSourceEdit.Text = mFragmentSource;
 
             Application.Idle += AppIdle;
             mStopWatch.Start();
@@ -229,7 +242,7 @@ void main()
 
         private void glControl1_Paint(object sender, PaintEventArgs e)
         {
-            if (!mGLControlLoaded)
+            if (!mGLControlLoaded || (compilerThread != null && compilerThread.IsAlive))
                 return;
 
             glControl1.MakeCurrent();
@@ -243,15 +256,44 @@ void main()
             glControl1.Invalidate();
         }
 
-        private void fragmentSourceEdit_TextChanged(object sender, EventArgs e)
+        private void CompileFragmentShaderThread()
         {
-            if (CompileFragmentShader(fragmentSourceEdit.Text))
+            glControl1.MakeCurrent();
+
+            if (CompileFragmentShader(mCopyOfFragmentShaderEdit))
             {
-                //Flush console.
-                console.Text = "";
+                BeginInvoke(new FlushConsoleDelegate(FlushConsole));
             }
 
             LinkProgram();
+
+            glControl1.Context.MakeCurrent(null);
+        }
+
+        private void FlushConsole()
+        {
+            //Flush console.
+            console.Text = "";
+        }
+
+        private void fragmentSourceEdit_TextChanged(object sender, ScintillaNET.TextModifiedEventArgs e)
+        {
+            if (compilerThread != null)
+            {
+                compilerThread.Join();
+            }
+
+            try
+            {
+                glControl1.Context.MakeCurrent(null);
+            }
+            catch
+            { }
+
+            mCopyOfFragmentShaderEdit = (string)fragmentSourceEdit.Text.Clone();
+            compilerThread = new Thread(new ThreadStart(CompileFragmentShaderThread));
+            compilerThread.IsBackground = true;
+            compilerThread.Start();
         }
 
         private void openShaderToolStripMenuItem_Click(object sender, EventArgs e)

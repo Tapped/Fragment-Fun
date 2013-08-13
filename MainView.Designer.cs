@@ -112,21 +112,21 @@
             // openShaderToolStripMenuItem
             // 
             this.openShaderToolStripMenuItem.Name = "openShaderToolStripMenuItem";
-            this.openShaderToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openShaderToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.openShaderToolStripMenuItem.Text = "Open Shader";
             this.openShaderToolStripMenuItem.Click += new System.EventHandler(this.openShaderToolStripMenuItem_Click);
             // 
             // saveShaderToolStripMenuItem
             // 
             this.saveShaderToolStripMenuItem.Name = "saveShaderToolStripMenuItem";
-            this.saveShaderToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveShaderToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.saveShaderToolStripMenuItem.Text = "Save Shader";
             this.saveShaderToolStripMenuItem.Click += new System.EventHandler(this.saveShaderToolStripMenuItem_Click);
             // 
             // refreshToolStripMenuItem
             // 
             this.refreshToolStripMenuItem.Name = "refreshToolStripMenuItem";
-            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.refreshToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.refreshToolStripMenuItem.Text = "Refresh (F5)";
             this.refreshToolStripMenuItem.ToolTipText = "Press F5 to refresh shader source from disk.";
             this.refreshToolStripMenuItem.Click += new System.EventHandler(this.refreshToolStripMenuItem_Click);
@@ -159,7 +159,8 @@
             this.fragmentSourceEdit.Name = "fragmentSourceEdit";
             this.fragmentSourceEdit.Size = new System.Drawing.Size(850, 791);
             this.fragmentSourceEdit.TabIndex = 5;
-            this.fragmentSourceEdit.TextChanged += new System.EventHandler(this.fragmentSourceEdit_TextChanged);
+            this.fragmentSourceEdit.TextDeleted += new System.EventHandler<ScintillaNET.TextModifiedEventArgs>(this.fragmentSourceEdit_TextChanged);
+            this.fragmentSourceEdit.TextInserted += new System.EventHandler<ScintillaNET.TextModifiedEventArgs>(this.fragmentSourceEdit_TextChanged);
             // 
             // globalTimeTextBox
             // 
