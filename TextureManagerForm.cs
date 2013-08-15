@@ -232,6 +232,7 @@ namespace FragmentFun
                     GL.BindTexture(TextureTarget.Texture2D, MainView.mTextureObjects[mChannelSelected.TabIndex]);
 
                     Bitmap bitmap = new Bitmap(openFileDialog1.FileName);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     BitmapData bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -258,6 +259,7 @@ namespace FragmentFun
 
                     //Positive x face
                     Bitmap bitmap = new Bitmap(openFileDialog1.FileNames[0]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     BitmapData bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -268,6 +270,7 @@ namespace FragmentFun
 
                     //Negative x face
                     bitmap = new Bitmap(openFileDialog1.FileNames[1]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -278,6 +281,7 @@ namespace FragmentFun
 
                     //Positive y face
                     bitmap = new Bitmap(openFileDialog1.FileNames[2]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -288,6 +292,7 @@ namespace FragmentFun
 
                     //Negative y face
                     bitmap = new Bitmap(openFileDialog1.FileNames[3]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -298,6 +303,7 @@ namespace FragmentFun
 
                     //Positive z face
                     bitmap = new Bitmap(openFileDialog1.FileNames[4]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
@@ -308,6 +314,7 @@ namespace FragmentFun
 
                     //Negative z face
                     bitmap = new Bitmap(openFileDialog1.FileNames[5]);
+                    bitmap.RotateFlip(RotateFlipType.Rotate180FlipX);
                     bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                                                         ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 

@@ -74,6 +74,7 @@
             this.console.Size = new System.Drawing.Size(1024, 164);
             this.console.TabIndex = 1;
             this.console.Text = "";
+            this.console.TextChanged += new System.EventHandler(this.console_TextChanged);
             // 
             // fpsLabel
             // 

@@ -27,9 +27,9 @@
         textureCube
         transpose inverse reflect sqrt abs
         length normalize dot floor pow
-        cross
+        cross exp
       </Keywords>
-      <Keywords List="1">uniform if for while switch return</Keywords>
+      <Keywords List="1">uniform if for while switch return else</Keywords>
     </Lexer>
     <Styles>
       <Style Name="NUMBER" ForeColor="Goldenrod"/>

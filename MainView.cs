@@ -46,7 +46,7 @@ void main()
                                   "uniform sampler2D iChannel1;" +
                                   "uniform sampler2D iChannel2;" +
                                   "uniform sampler2D iChannel3;" +
-                                  "uniform sampler2D iChannel4;";
+                                  "uniform sampler2D iChannel4;\n";
 
         enum FragmentUniforms
         {
@@ -129,7 +129,20 @@ void main()
             GL.GetShader(shader, ShaderParameter.CompileStatus, out isCompiled);
             if (isCompiled == 0)
             {
-                WriteToConsole(GL.GetShaderInfoLog(shader));
+                string errorLog = GL.GetShaderInfoLog(shader);
+                for (int i = 0; i < errorLog.Length; ++i)
+                {
+                    if (errorLog[i] == ':' && errorLog[i + 1] != ' ' && errorLog[i + 1] != '\n')
+                    {
+                        string lineNumberString = errorLog.Substring(i + 1);
+                        int currentLine = Convert.ToInt32(lineNumberString.Split(new char[] {':'}, 2)[0]);
+                        errorLog = errorLog.Remove(i+1, currentLine.ToString().Length).Insert(i+1, Convert.ToString(currentLine - 3));
+
+                        ++i;
+                    }
+                }
+
+                WriteToConsole(errorLog);
                 return false;
             }
 
@@ -278,22 +291,25 @@ void main()
 
         private void fragmentSourceEdit_TextChanged(object sender, ScintillaNET.TextModifiedEventArgs e)
         {
-            if (compilerThread != null)
+            if (!mIsPaused)
             {
-                compilerThread.Join();
-            }
+                if (compilerThread != null)
+                {
+                    compilerThread.Join();
+                }
 
-            try
-            {
-                glControl1.Context.MakeCurrent(null);
-            }
-            catch
-            { }
+                try
+                {
+                    glControl1.Context.MakeCurrent(null);
+                }
+                catch
+                { }
 
-            mCopyOfFragmentShaderEdit = (string)fragmentSourceEdit.Text.Clone();
-            compilerThread = new Thread(new ThreadStart(CompileFragmentShaderThread));
-            compilerThread.IsBackground = true;
-            compilerThread.Start();
+                mCopyOfFragmentShaderEdit = (string)fragmentSourceEdit.Text.Clone();
+                compilerThread = new Thread(new ThreadStart(CompileFragmentShaderThread));
+                compilerThread.IsBackground = true;
+                compilerThread.Start();
+            }
         }
 
         private void openShaderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -343,6 +359,14 @@ void main()
             if (mIsPaused)
             {
                 mStopWatch.Start();
+
+                // Lets recompile.
+                if (CompileFragmentShader(fragmentSourceEdit.Text))
+                {
+                    FlushConsole();
+                }
+
+                LinkProgram();
             }
             else
             {
@@ -369,6 +393,12 @@ void main()
             {
                refreshToolStripMenuItem_Click(sender, new EventArgs());
             }
+        }
+
+        private void console_TextChanged(object sender, EventArgs e)
+        {
+            console.SelectionStart = console.Text.Length;
+            console.ScrollToCaret();
         }
     }
 }
