@@ -27,7 +27,7 @@
         textureCube
         transpose inverse reflect sqrt abs
         length normalize dot floor pow
-        cross exp
+        cross exp exp2 clamp
       </Keywords>
       <Keywords List="1">uniform if for while switch return else</Keywords>
     </Lexer>

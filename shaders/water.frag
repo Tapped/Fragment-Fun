@@ -1,10 +1,11 @@
 // Based on: https://www.shadertoy.com/view/Xdl3W7
 
 #define PI 3.14159265359
-#define MAX_RAYMARCH_ITER 120
+#define MAX_RAYMARCH_ITER 80
+#define MAX_BINARY_ITERS 11
 
 const float precis = 0.001;
-const float waterHeight = 120.0;
+const float waterHeight = 100.0;
 const vec3 lightDir = normalize(vec3(0.0, 0.5, 0.5));
 const float LOG2 = 1.442695;
 
@@ -61,10 +62,10 @@ vec3 rotateY(vec3 p, float a)
     return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z);
 }
 
-vec3 fogColor(vec3 ro, vec3 rd)
+vec3 fogColor(vec3 rd)
 {
-	vec3 col = mix(vec3(0.3, 0.6, 0.9), vec3(0.0, 0.05, 0.2), clamp(rd.y*2.5, 0.0, 1.0));
-	col += pow(dot(lightDir, rd) * 0.5 + 0.5, 2.0) * vec3(0.3, 0.2, 0.1);	
+	vec3 col = mix(vec3(0.3, 0.6, 0.9), vec3(0.0, 0.05, 0.2), clamp(rd.y * 2.5, 0.0, 1.0));
+	col += pow(dot(lightDir, rd) * 0.5 + 0.5, 2.0) * vec3(0.5, 0.5, 0.5);	
 	return col;
 }
 
@@ -106,17 +107,31 @@ float raymarchTerrain(vec3 ro, vec3 rd)
     float precis = 0.001;
     float h = 1.0;
     float t = (ro.y - 10.0) / rd.y;
+    vec3 p = vec3(0.0);
+
     for(int i=0;i<MAX_RAYMARCH_ITER;i++)
     {
         if(abs(h) < precis || t > maxd) 
             break;
        
-        h = mapTerrain(ro + rd * t);
+        p = ro + rd * t;
+        h = mapTerrain(p);
         t += h;
     }
 
-    if(t > maxd) t=-1.0;
-    return t;
+    float st = t*0.5;
+    float bt = st;
+    for (int i = 0; i < MAX_BINARY_ITERS; i++) 
+    {
+        p = ro + rd * bt;
+        h = mapTerrain(p);
+        if (abs(h) < 0.0001) break;
+        st *= sign(h) * sign(st) * 0.5;
+        bt += st;
+    }
+
+    if(bt > maxd || bt > 3000.0) t=-1.0;
+    return bt;
 }
 
 //Code from iq.
@@ -146,6 +161,16 @@ vec3 terrainColor(vec3 ro, vec3 rd, float t, vec3 p)
     vec3 col = vec3(0.0);
     float waterT = (ro.y - waterHeight) / rd.y;
 
+    vec3 fogColor = fogColor(rd);
+    float fogT = min(waterT, t) / 1000.0;
+    float density = 0.5;
+    float fogFactor = clamp(exp2(-density * density * fogT * fogT * LOG2), 0.0, 1.0);
+
+    if(fogFactor < 0.002)
+    {
+        return fogColor;
+    }
+
     vec3 norm = calcNormalHigh(p);
     vec3 albedo = vec3(0.996, 0.835, 0.494);
     if (waterT > t) 
@@ -163,6 +188,7 @@ vec3 terrainColor(vec3 ro, vec3 rd, float t, vec3 p)
 
     float diff = clamp(dot(norm, lightDir), 0.0, 1.0);
     col += albedo * diff * vec3(1.0, 0.9, 0.8);
+    col += mix(fogColor, col, fogFactor);
 
     if(t >= waterT)
     {
@@ -175,28 +201,21 @@ vec3 terrainColor(vec3 ro, vec3 rd, float t, vec3 p)
 
 vec4 render(vec3 screen)
 {
-    vec3 rayOrigin = vec3(0.0, 0.0, -1.2);
-    vec3 rayPos = rayOrigin + vec3(sin(iGlobalTime * 0.2) * 600.0, 15.0, cos(iGlobalTime * 0.2) * 600.0); 
+    vec3 rayOrigin = vec3(0.0, 0.0, -1.0);
+    vec3 rayPos = rayOrigin + vec3(iGlobalTime * 200.0, 5.0, cos(iGlobalTime * 0.5) * 800.0); 
     vec3 rayDir = normalize(screen - rayOrigin);
-    rayDir = rotateY(rotateX(rayDir, 0.3), 0.0);
+    rayDir = rotateY(rotateX(rayDir, 0.4), 0.0);
 
     vec4 finalCol = vec4(0.0);//textureCube(iChannel0, rayDir);
 
     float t = raymarchTerrain(rayPos, rayDir);
     if(t > 0.0)
     {
-        if(t > 2000.0)
-        {
-            finalCol = vec4(fogColor(rayPos, rayDir), 1.0);
-        }
-        else
-        {
-            finalCol = vec4(terrainColor(rayPos, rayDir, t, rayPos + rayDir * t), 1.0);
-        }
+        finalCol = vec4(terrainColor(rayPos, rayDir, t, rayPos + rayDir * t), 1.0);
     }
     else
     {
-        finalCol = vec4(fogColor(rayPos, rayDir), 1.0);
+        finalCol = vec4(fogColor(rayDir), 1.0);
     }
 
     return finalCol;
