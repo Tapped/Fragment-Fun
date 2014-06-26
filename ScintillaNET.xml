@@ -7,8 +7,8 @@
   </Language>
 
   <Language Name="glsl">
-    <Indentation TabWidth="4" UseTabs="false"/>
-    <Lexer LexerName="cpp" StreamCommentPrefix="{ " StreamCommentSuffix=" }">
+    <Indentation TabWidth="4" SmartIndentType="CPP" UseTabs="False"/>
+    <Lexer LexerName="cpp">
       <Keywords List="0">
         const void bool int uint float double
         bvec2 bvec3 bvec4
@@ -27,12 +27,34 @@
         textureCube
         transpose inverse reflect sqrt abs
         length normalize dot floor pow
-        cross exp exp2 clamp
+        cross exp exp2 clamp smoothstep
       </Keywords>
       <Keywords List="1">uniform if for while switch return else</Keywords>
     </Lexer>
     <Styles>
       <Style Name="NUMBER" ForeColor="Goldenrod"/>
     </Styles>
+    <AutoComplete FillUpCharacters=".(" SingleLineAccept="True" IsCaseSensitive="False">
+      <List>
+        const void bool int uint float double
+        bvec2 bvec3 bvec4
+        ivec2 ivec3 ivec4
+        uvec2 uvec3 uvec4
+        vec2 vec3 vec4
+        dvec2 dvec3 dvec4
+        mat2 mat3 mat4
+        mat2x2 mat2x3 mat2x4
+        mat3x2 mat3x3 mat3x4
+        mat4x2 mat4x3 mat4x4
+
+        sin cos tan mix max min
+        asin acos atan
+        texture texture1D texture2D texture3D
+        textureCube
+        transpose inverse reflect sqrt abs
+        length normalize dot floor pow
+        cross exp exp2 clamp smoothstep
+      </List>
+    </AutoComplete>
   </Language>
 </ScintillaNET>

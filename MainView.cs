@@ -13,6 +13,7 @@ using System.IO;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Graphics;
 using OpenTK;
+using DotRocket;
 
 namespace FragmentFun
 {
@@ -27,6 +28,8 @@ namespace FragmentFun
         public static int[] mTextureObjects = new int[NUM_TEXTURES];
         public static TextureTarget[] mTextureTypes = new TextureTarget[NUM_TEXTURES];
 
+        const double rowRate = 8; // Rows per second
+
         const string mVertexSource = @"#version 130
 in vec3 position;
 void main()
@@ -40,13 +43,13 @@ void main()
                                  "\tgl_FragColor = vec4(uv, 0.5, 1.0);\n" +
                                  "}";
 
-        static string fragmentUniforms = "uniform vec2 iResolution;\n" +
+        static string fragmentUniforms = "\nuniform vec2 iResolution;" +
                                   "uniform float iGlobalTime;" +
                                   "uniform sampler2D iChannel0;" +
                                   "uniform sampler2D iChannel1;" +
                                   "uniform sampler2D iChannel2;" +
                                   "uniform sampler2D iChannel3;" +
-                                  "uniform sampler2D iChannel4;\n";
+                                  "uniform sampler2D iChannel4;";
 
         enum FragmentUniforms
         {
@@ -60,10 +63,13 @@ void main()
             TOTAL
         };
 
+        readonly DotRocket.Device rocket;
+        Dictionary<string, GLSLTrack> tracks = new Dictionary<string, GLSLTrack>();
+
         Thread compilerThread;
         TextureManagerForm mTexManagerForm = null;
-        Stopwatch mStopWatch = new Stopwatch();
         Stopwatch mFPSStopWatch = new Stopwatch();
+        double time = 0;
         string mCopyOfFragmentShaderEdit;
         int mFrameCounter;
         double mFrameTimeAccum;
@@ -76,6 +82,47 @@ void main()
         public MainView()
         {
             InitializeComponent();
+            fragmentSourceEdit.AutoComplete.List.Sort();
+
+            // We try to connect to rocket
+            rocket = new DotRocket.ClientDevice("sync");
+            rocket.OnPause += Pause;
+            rocket.OnSetRow += SetRow;
+            rocket.OnIsPlaying += IsPlaying;
+            rocket.Connect("localhost", 1338);
+        }
+
+        public void Pause(bool flag)
+        {
+            if (flag)
+            {
+                mIsPaused = true;
+                mFPSStopWatch.Stop();
+            }
+            else
+            {
+                mIsPaused = false;
+                mFPSStopWatch.Start();
+
+                // Lets recompile.
+                if (CompileFragmentShader(fragmentSourceEdit.Text))
+                {
+                    FlushConsole();
+                }
+
+                LinkProgram();
+            }
+        }
+
+        public void SetRow(int row)
+        {
+            time = (double)row / rowRate;
+            glControl1.Invalidate();
+        }
+
+        public bool IsPlaying()
+        {
+            return !mIsPaused;
         }
 
         public static void SetSamplerType(TextureTarget target, int channel)
@@ -136,7 +183,7 @@ void main()
                     {
                         string lineNumberString = errorLog.Substring(i + 1);
                         int currentLine = Convert.ToInt32(lineNumberString.Split(new char[] {':'}, 2)[0]);
-                        errorLog = errorLog.Remove(i+1, currentLine.ToString().Length).Insert(i+1, Convert.ToString(currentLine - 3));
+                        errorLog = errorLog.Remove(i+1, currentLine.ToString().Length).Insert(i+1, Convert.ToString(currentLine-1));
 
                         ++i;
                     }
@@ -151,13 +198,46 @@ void main()
 
         private bool CompileFragmentShader(string fragmentSource)
         {
-            fragmentSource = fragmentSource.Insert(0, "#version 130\n" + fragmentUniforms);
-            return CompileShader(mFragmentShader, fragmentSource);
+            StringBuilder fragSource = new StringBuilder(fragmentSource);
+            int uniformLoc = 0;
+            int versionIdx = fragmentSource.IndexOf("#version");
+            if (versionIdx >= 0)
+            {
+                uniformLoc = fragmentSource.IndexOf('\n', versionIdx) + 1;
+            }
+            fragSource.Insert(uniformLoc, fragmentUniforms);
+
+            // Find all track values
+            try
+            {
+                int trackStart = 0;
+                while ((trackStart = fragmentSource.IndexOf("rocket ", trackStart)) >= 0)
+                {
+                    int typeStart = fragmentSource.IndexOf(' ', trackStart) + 1;
+                    int typeEnd = fragmentSource.IndexOf(' ', typeStart);
+                    string type = fragmentSource.Substring(typeStart, typeEnd - typeStart);
+                    string name = fragmentSource.Substring(typeEnd + 1, fragmentSource.IndexOf(';', typeEnd + 1) - typeEnd - 1);
+
+                    if(!tracks.ContainsKey(name))
+                        tracks.Add(name, new GLSLTrack(name, rocket, "x", "y", "z"));
+                    
+                    ++trackStart;
+                }
+                fragSource.Replace("rocket", "uniform");
+            }
+            catch (Exception e)
+            {
+                WriteToConsole(e.Message + '\n');
+            }
+            
+            return CompileShader(mFragmentShader, fragSource.ToString());
         }
 
         private void LinkProgram()
         {
             GL.LinkProgram(mProgram);
+
+            GL.UseProgram(mProgram);
 
             mUniformLocations[(int)FragmentUniforms.RESOLUTION] = GL.GetUniformLocation(mProgram, "iResolution");
             mUniformLocations[(int)FragmentUniforms.GLOBALTIME] = GL.GetUniformLocation(mProgram, "iGlobalTime");
@@ -170,15 +250,27 @@ void main()
 
         void AppIdle(object sender, EventArgs e)
         {
+            rocket.Update((int)System.Math.Floor(time * rowRate));
+
+            double row = time * rowRate;
+            foreach(var track in tracks)
+            {
+                int location = GL.GetUniformLocation(mProgram, track.Key);
+                GL.Uniform3(location, (float)track.Value.Tracks[0].GetValue(row), (float)track.Value.Tracks[1].GetValue(row), (float)track.Value.Tracks[2].GetValue(row));
+            }
+
             if (!mIsPaused)
             {
                 mFPSStopWatch.Stop();
                 double milliseconds = mFPSStopWatch.Elapsed.TotalMilliseconds;
-                mFPSStopWatch.Restart();
+                time += milliseconds / 1000;
                 CalculateFPS(milliseconds);
+                mFPSStopWatch.Restart();
 
                 glControl1.Invalidate();
             }
+
+            globalTimeTextBox.Text = time.ToString("0.00");
         }
 
         private void CalculateFPS(double milliseconds)
@@ -196,9 +288,8 @@ void main()
 
         private void Render()
         {
-            GL.UseProgram(mProgram);
             GL.Uniform2(mUniformLocations[(int)FragmentUniforms.RESOLUTION], new Vector2((float)glControl1.Width, (float)glControl1.Height));
-            GL.Uniform1(mUniformLocations[(int)FragmentUniforms.GLOBALTIME], (float)mStopWatch.Elapsed.TotalSeconds);
+            GL.Uniform1(mUniformLocations[(int)FragmentUniforms.GLOBALTIME], (float)time);
             GL.Uniform1(mUniformLocations[(int)FragmentUniforms.CHANNEL0], 0);
             GL.Uniform1(mUniformLocations[(int)FragmentUniforms.CHANNEL1], 1);
             GL.Uniform1(mUniformLocations[(int)FragmentUniforms.CHANNEL2], 2);
@@ -213,12 +304,9 @@ void main()
 
             GL.CallList(mListForQuad);
 
-            GL.UseProgram(0);
             GL.BindTexture(TextureTarget.Texture2D, 0);
 
             glControl1.SwapBuffers();
-
-            globalTimeTextBox.Text = mStopWatch.Elapsed.TotalSeconds.ToString("0.00");
         }
 
         private void glControl1_Load(object sender, EventArgs e)
@@ -250,7 +338,6 @@ void main()
             fragmentSourceEdit.Text = mFragmentSource;
 
             Application.Idle += AppIdle;
-            mStopWatch.Start();
         }
 
         private void glControl1_Paint(object sender, PaintEventArgs e)
@@ -350,30 +437,14 @@ void main()
 
         private void resetGlobalTimerButton_Click(object sender, EventArgs e)
         {
-            mStopWatch.Restart();
+            time = 0;
+            mFPSStopWatch.Restart();
             mIsPaused = false;
         }
 
         private void startPauseButton_Click(object sender, EventArgs e)
         {
-            if (mIsPaused)
-            {
-                mStopWatch.Start();
-
-                // Lets recompile.
-                if (CompileFragmentShader(fragmentSourceEdit.Text))
-                {
-                    FlushConsole();
-                }
-
-                LinkProgram();
-            }
-            else
-            {
-                mStopWatch.Stop();
-            }
-
-            mIsPaused = !mIsPaused;
+            Pause(!mIsPaused);
         }
 
         private void textureManagerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -392,6 +463,13 @@ void main()
             if (e.KeyCode == Keys.F5)
             {
                refreshToolStripMenuItem_Click(sender, new EventArgs());
+            }
+            else if (e.KeyCode == Keys.S &&
+                     e.Control)
+            {
+                System.IO.StreamWriter sr = new System.IO.StreamWriter(saveFileDialog1.FileName);
+                sr.Write(fragmentSourceEdit.Text);
+                sr.Close();
             }
         }
 

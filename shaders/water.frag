@@ -1,12 +1,12 @@
 // Based on: https://www.shadertoy.com/view/Xdl3W7
-
 #define PI 3.14159265359
 #define MAX_RAYMARCH_ITER 80
 #define MAX_BINARY_ITERS 11
+#define MAX_REFLECTION_ITERS 15
 
 const float precis = 0.001;
 const float waterHeight = 100.0;
-const vec3 lightDir = normalize(vec3(0.0, 0.5, 0.5));
+const vec3 lightDir = vec3(0.0, 0.5, 0.5);
 const float LOG2 = 1.442695;
 
 // By iq
@@ -64,31 +64,31 @@ vec3 rotateY(vec3 p, float a)
 
 vec3 fogColor(vec3 rd)
 {
-	vec3 col = mix(vec3(0.3, 0.6, 0.9), vec3(0.0, 0.05, 0.2), clamp(rd.y * 2.5, 0.0, 1.0));
-	col += pow(dot(lightDir, rd) * 0.5 + 0.5, 2.0) * vec3(0.5, 0.5, 0.5);	
-	return col;
+    vec3 col = mix(vec3(0.3, 0.6, 0.9), vec3(0.0, 0.05, 0.2), clamp(rd.y * 2.5, 0.0, 1.0));
+    col += pow(dot(lightDir, rd) * 0.5 + 0.5, 2.0) * vec3(0.5, 0.5, 0.5);   
+    return col;
 }
 
 float displacement(vec3 p)
 { 
     float final = noise(p);
-	p *= 2.94; final += noise(p.xz) * 0.4;
-	p *= 2.87; final += noise(p.xz) * 0.1;
-	final += final * 0.005; // Compensate for mssing noise on low quality version
-	return pow(final, 1.5) - 1.0;
+    p *= 2.94; final += noise(p.xz) * 0.4;
+    p *= 2.87; final += noise(p.xz) * 0.1;
+    final += final * 0.005; // Compensate for mssing noise on low quality version
+    return pow(final, 1.5) - 1.0;
 }
 
 float displacementHigh(vec3 p) 
 {
-	float final = noise(p); 
-	p *= 2.94; final += noise(p.xz) * 0.1;
-	p *= 2.87; final += noise(p.xz) * 0.1;
-	p *= 2.97; final += noise(p) * final * 0.02;
-	final = pow(final, 1.5);
-	p *= 1.97; final += noise(p) * final * 0.007;
-	p *= 1.99; final += noise(p) * final * 0.002;
-	p *= 1.91; final += noise(p) * final * 0.0008;
-	return final - 1.0;
+    float final = noise(p); 
+    p *= 2.94; final += noise(p.xz) * 0.1;
+    p *= 2.87; final += noise(p.xz) * 0.1;
+    p *= 2.97; final += noise(p) * final * 0.02;
+    final = pow(final, 1.5);
+    p *= 1.97; final += noise(p) * final * 0.007;
+    p *= 1.99; final += noise(p) * final * 0.002;
+    p *= 1.91; final += noise(p) * final * 0.0008;
+    return final - 1.0;
 }
 
 float mapTerrain(vec3 p)
@@ -134,6 +134,26 @@ float raymarchTerrain(vec3 ro, vec3 rd)
     return bt;
 }
 
+vec3 reflectionTrace(vec3 ro, vec3 rd)
+{
+    float t = 0.0;
+    float h = 0.0;
+    vec3 p = vec3(0.0);
+    for(int i = 0;i < MAX_REFLECTION_ITERS;i++)
+    {
+        if(abs(h) < precis || t > 2000.0) 
+            break;
+        
+        p = ro + rd * t;
+        h = mapTerrain(p);
+        t += h;
+    }
+
+    if(h < 1.0) 
+        return vec3(0.0, 0.0, 0.0);
+    return fogColor(rd);
+}
+
 //Code from iq.
 vec3 calcNormal(vec3 pos)
 {
@@ -175,16 +195,16 @@ vec3 terrainColor(vec3 ro, vec3 rd, float t, vec3 p)
     vec3 albedo = vec3(0.996, 0.835, 0.494);
     if (waterT > t) 
     {
-		float snowThresh = 1.0 - smoothstep(-50.0, -40.0, p.y) * 0.4 + 0.1;
-		float grassThresh = smoothstep(-70.0, -30.0, p.y) * 0.3 + 0.75;
-		
-		if (norm.y < 0.65)
-			albedo = mix(albedo, vec3(1.0, 1.0, 1.0), smoothstep(0.65,0.55,norm.y));
-		if (norm.y > grassThresh - 0.05)
-			albedo = mix(albedo, vec3(0.027, 0.333, 0.192), smoothstep(grassThresh-0.05,grassThresh+0.05, norm.y));
-		if (norm.y > snowThresh - 0.05)
-			albedo = mix(albedo, vec3(0.5, 0.5, 0.5), smoothstep(snowThresh-0.05,snowThresh+0.05, norm.y));
-	}
+        float snowThresh = 1.0 - smoothstep(-50.0, -40.0, p.y) * 0.4 + 0.1;
+        float grassThresh = smoothstep(-70.0, -30.0, p.y) * 0.3 + 0.75;
+        
+        if (norm.y < 0.65)
+            albedo = mix(albedo, vec3(1.0, 1.0, 1.0), smoothstep(0.65,0.55,norm.y));
+        if (norm.y > grassThresh - 0.05)
+            albedo = mix(albedo, vec3(0.027, 0.333, 0.192), smoothstep(grassThresh-0.05,grassThresh+0.05, norm.y));
+        if (norm.y > snowThresh - 0.05)
+            albedo = mix(albedo, vec3(0.5, 0.5, 0.5), smoothstep(snowThresh-0.05,snowThresh+0.05, norm.y));
+    }
 
     float diff = clamp(dot(norm, lightDir), 0.0, 1.0);
     col += albedo * diff * vec3(1.0, 0.9, 0.8);
@@ -194,6 +214,11 @@ vec3 terrainColor(vec3 ro, vec3 rd, float t, vec3 p)
     {
         float dist = t - waterT;
         col *= exp(-vec3(0.3, 0.15, 0.03)*dist);
+
+        float f = 1.0 - pow(1.0 - clamp(-rd.y, 0.0, 1.0), 5.0);
+        vec3 reflectDir = normalize(rd * vec3(1.0, -1.0, 1.0));
+        vec3 reflectCol = reflectionTrace(ro + rd * waterT, reflectDir);
+        col = mix(reflectCol, col, f);
     }
 
     return col;
