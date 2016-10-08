@@ -140,7 +140,7 @@ App_Data/*.ldf
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
-
+packages
 # Folder config file
 Desktop.ini
 
