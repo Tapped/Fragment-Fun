@@ -42,7 +42,7 @@ void main()
 		string mFragmentSource = "void main()\n" +
 								 "{\n" +
 								 "\tvec2 uv = gl_FragCoord.xy / iResolution.xy;\n" +
-								 "\tgl_FragColor = vec4(uv, 0.5, 1.0);\n" +
+								 "\tgl_FragColor = vec4(uv, sin(iGlobalTime), 1.0);\n" +
 								 "}";
 
 		static string fragmentUniforms = "\nuniform vec2 iResolution;" +
@@ -86,6 +86,18 @@ void main()
 			InitializeComponent();
 			fragmentSourceEdit.Show();
 
+			SetScintillaStyle();
+
+			// We try to connect to rocket
+			rocket = new DotRocket.ClientDevice("sync");
+			rocket.OnPause += Pause;
+			rocket.OnSetRow += SetRow;
+			rocket.OnIsPlaying += IsPlaying;
+			rocket.Connect("localhost", 1338);
+		}
+
+		void SetScintillaStyle()
+		{
 			fragmentSourceEdit.Margins[0].Width = 16;
 			fragmentSourceEdit.StyleResetDefault();
 			fragmentSourceEdit.Styles[Style.Default].Font = "Consolas";
@@ -107,16 +119,12 @@ void main()
 			fragmentSourceEdit.Styles[Style.Cpp.Operator].ForeColor = Color.Purple;
 			fragmentSourceEdit.Styles[Style.Cpp.Preprocessor].ForeColor = Color.Maroon;
 
-			fragmentSourceEdit.SetKeywords(0, "abstract as base break case catch checked continue default delegate do else event explicit extern false finally fixed for foreach goto if implicit in interface internal is lock namespace new null object operator out override params private protected public readonly ref return sealed sizeof stackalloc switch this throw true try typeof unchecked unsafe using virtual while");
-			fragmentSourceEdit.SetKeywords(1, "bool byte char class const decimal double enum float int long sbyte short static string struct uint ulong ushort void"
-				+ " bvec2 bvec3 bvec4 ivec2 ivec3 ivec4 uvec2 uvec3 uvec4 vec2 vec3 vec4 dvec2 dvec3 dvec4 mat2 mat3 mat4 mat2x2 mat2x3 mat2x4 mat3x2 mat3x3 mat3x4 mat4x2 mat4x3 mat4x4 sin cos tan mix max min asin acos atan texture texture1D texture2D texture3D textureCube transpose inverse reflect sqrt abs length normalize dot floor pow cross exp exp2 clamp smoothstep");
-
-			// We try to connect to rocket
-			rocket = new DotRocket.ClientDevice("sync");
-			rocket.OnPause += Pause;
-			rocket.OnSetRow += SetRow;
-			rocket.OnIsPlaying += IsPlaying;
-			rocket.Connect("localhost", 1338);
+			fragmentSourceEdit.SetKeywords(0,
+				"abstract as base break case catch checked continue default delegate do else event explicit extern false finally fixed for foreach goto if implicit in interface internal is lock namespace new null object operator out override params protected public readonly ref return sealed sizeof stackalloc switch this throw true try typeof unchecked unsafe using virtual while");
+			fragmentSourceEdit.SetKeywords(1,
+				"bool byte char class const decimal double enum float int long sbyte short static string struct uint ulong ushort void"
+				+
+				" bvec2 bvec3 bvec4 ivec2 ivec3 ivec4 uvec2 uvec3 uvec4 vec2 vec3 vec4 dvec2 dvec3 dvec4 mat2 mat3 mat4 mat2x2 mat2x3 mat2x4 mat3x2 mat3x3 mat3x4 mat4x2 mat4x3 mat4x4 sin cos tan mix max min asin acos atan texture texture1D texture2D texture3D textureCube transpose inverse reflect sqrt abs length normalize dot floor pow cross exp exp2 clamp smoothstep rocket");
 		}
 
 		public void Pause(bool flag)
@@ -177,12 +185,12 @@ void main()
 			fragmentUniforms = fragmentUniforms.Insert(replaceLoc, samplerType + " ");
 		}
 
-		private void FreeGLObjects()
+		void FreeGLObjects()
 		{
 			GL.DeleteLists(mListForQuad, 1);
 		}
 
-		private void WriteToConsole(string strOut)
+		void WriteToConsole(string strOut)
 		{
 			if (console.InvokeRequired)
 			{
@@ -194,7 +202,7 @@ void main()
 			}
 		}
 
-		private bool CompileShader(int shader, string shaderSource, string originalSource)
+		bool CompileShader(int shader, string shaderSource, string originalSource)
 		{
 			var newSourceNumLines = shaderSource.Split(new char[] { '\n' }).Count();
 			var oldSourceNumLines = originalSource.Split(new char[] { '\n' }).Count();
@@ -245,7 +253,7 @@ void main()
 			return GLSLType.INVALID;
 		}
 
-		private bool CompileFragmentShader(string fragmentSource)
+		bool CompileFragmentShader(string fragmentSource)
 		{
 			StringBuilder fragSource = new StringBuilder(fragmentSource);
 			int uniformLoc = 0;
@@ -304,7 +312,7 @@ void main()
 			return result;
 		}
 
-		private void LinkProgram()
+		void LinkProgram()
 		{
 			GL.LinkProgram(mProgram);
 
@@ -359,7 +367,7 @@ void main()
 			globalTimeTextBox.Text = time.ToString("0.00");
 		}
 
-		private void CalculateFPS(double milliseconds)
+		void CalculateFPS(double milliseconds)
 		{
 			++mFrameCounter;
 			mFrameTimeAccum += milliseconds;
@@ -372,7 +380,7 @@ void main()
 			}
 		}
 
-		private void Render()
+		void Render()
 		{
 			GL.Uniform2(mUniformLocations[(int)FragmentUniforms.RESOLUTION], new Vector2((float)glControl1.Width, (float)glControl1.Height));
 			GL.Uniform1(mUniformLocations[(int)FragmentUniforms.GLOBALTIME], (float)time);
@@ -395,7 +403,7 @@ void main()
 			glControl1.SwapBuffers();
 		}
 
-		private void glControl1_Load(object sender, EventArgs e)
+		void glControl1_Load(object sender, EventArgs e)
 		{
 			mGLControlLoaded = true;
 
@@ -426,7 +434,7 @@ void main()
 			Application.Idle += AppIdle;
 		}
 
-		private void glControl1_Paint(object sender, PaintEventArgs e)
+		void glControl1_Paint(object sender, PaintEventArgs e)
 		{
 			if (!mGLControlLoaded || (compilerThread != null && compilerThread.IsAlive))
 				return;
@@ -436,13 +444,13 @@ void main()
 			Render();
 		}
 
-		private void glControl1_Resize(object sender, EventArgs e)
+		void glControl1_Resize(object sender, EventArgs e)
 		{
 			GL.Viewport(0, 0, glControl1.Width, glControl1.Height);
 			glControl1.Invalidate();
 		}
 
-		private void CompileFragmentShaderThread()
+		void CompileFragmentShaderThread()
 		{
 			glControl1.MakeCurrent();
 
@@ -456,7 +464,7 @@ void main()
 			glControl1.Context.MakeCurrent(null);
 		}
 
-		private void FlushConsole()
+		void FlushConsole()
 		{
 			//Flush console.
 			console.Text = "";
@@ -485,7 +493,7 @@ void main()
 			}
 		}
 
-		private void openShaderToolStripMenuItem_Click(object sender, EventArgs e)
+		void openShaderToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (openFileDialog1.ShowDialog() == DialogResult.OK)
 			{
@@ -499,7 +507,7 @@ void main()
 			}
 		}
 
-		private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
+		void refreshToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (openFileDialog1.FileName != "")
 			{
@@ -510,7 +518,7 @@ void main()
 			}
 		}
 
-		private void saveShaderToolStripMenuItem_Click(object sender, EventArgs e)
+		void saveShaderToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (saveFileDialog1.ShowDialog() == DialogResult.OK)
 			{
@@ -521,19 +529,19 @@ void main()
 			}
 		}
 
-		private void resetGlobalTimerButton_Click(object sender, EventArgs e)
+		void resetGlobalTimerButton_Click(object sender, EventArgs e)
 		{
 			time = 0;
 			mFPSStopWatch.Restart();
 			mIsPaused = false;
 		}
 
-		private void startPauseButton_Click(object sender, EventArgs e)
+		void startPauseButton_Click(object sender, EventArgs e)
 		{
 			Pause(!mIsPaused);
 		}
 
-		private void textureManagerToolStripMenuItem_Click(object sender, EventArgs e)
+		void textureManagerToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (mTexManagerForm == null || mTexManagerForm.IsDisposed)
 			{
@@ -544,7 +552,7 @@ void main()
 			mTexManagerForm.Focus();
 		}
 
-		private void MainView_KeyDown(object sender, KeyEventArgs e)
+		void MainView_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F5)
 			{
@@ -559,7 +567,7 @@ void main()
 			}
 		}
 
-		private void console_TextChanged(object sender, EventArgs e)
+		void console_TextChanged(object sender, EventArgs e)
 		{
 			console.SelectionStart = console.Text.Length;
 			console.ScrollToCaret();
