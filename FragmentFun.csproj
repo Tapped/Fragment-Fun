@@ -51,10 +51,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DotRocket">
-      <HintPath>E:\Development\Programs\rocket-master\contrib\DotRocket\Release\DotRocket.dll</HintPath>
+      <HintPath>DotRocket.dll</HintPath>
     </Reference>
     <Reference Include="DotRocketClient">
-      <HintPath>E:\Development\Programs\rocket-master\contrib\DotRocket\Release\DotRocketClient.dll</HintPath>
+      <HintPath>DotRocketClient.dll</HintPath>
     </Reference>
     <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>packages\OpenTK.1.1.2349.61993\lib\NET40\OpenTK.dll</HintPath>
