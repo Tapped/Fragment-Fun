@@ -39,10 +39,10 @@ void main()
 	gl_Position = vec4(position, 1.0);
 }";
 
-		string mFragmentSource = "void main()\n" +
+		string mFragmentSource = "void mainImage(out vec4 fragColor, in vec2 fragCoord)\n" +
 								 "{\n" +
-								 "\tvec2 uv = gl_FragCoord.xy / iResolution.xy;\n" +
-								 "\tgl_FragColor = vec4(uv, sin(iGlobalTime), 1.0);\n" +
+								 "\tvec2 uv = fragCoord.xy / iResolution.xy;\n" +
+								 "\tfragColor = vec4(uv, sin(iGlobalTime), 1.0);\n" +
 								 "}";
 
 		static string fragmentUniforms = "\nuniform vec2 iResolution;" +
@@ -265,6 +265,7 @@ void main()
 			fragSource.Insert(uniformLoc, fragmentUniforms);
 
 			fragSource.Replace("rocket", "uniform");
+			fragSource.Append(@"void main() { mainImage(gl_FragColor, gl_FragCoord.xy); }");
 			bool result = CompileShader(mFragmentShader, fragSource.ToString(), fragmentSource);
 
 			if (result)
