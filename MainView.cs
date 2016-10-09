@@ -472,25 +472,22 @@ void main()
 
 		void fragmentSourceEdit_TextChanged(object sender, EventArgs e)
 		{
-			if (!mIsPaused)
+			if (compilerThread != null)
 			{
-				if (compilerThread != null)
-				{
-					compilerThread.Join();
-				}
-
-				try
-				{
-					glControl1.Context.MakeCurrent(null);
-				}
-				catch
-				{ }
-
-				mCopyOfFragmentShaderEdit = (string)fragmentSourceEdit.Text.Clone();
-				compilerThread = new Thread(new ThreadStart(CompileFragmentShaderThread));
-				compilerThread.IsBackground = true;
-				compilerThread.Start();
+				compilerThread.Join();
 			}
+
+			try
+			{
+				glControl1.Context.MakeCurrent(null);
+			}
+			catch
+			{ }
+
+			mCopyOfFragmentShaderEdit = (string)fragmentSourceEdit.Text.Clone();
+			compilerThread = new Thread(new ThreadStart(CompileFragmentShaderThread));
+			compilerThread.IsBackground = true;
+			compilerThread.Start();
 		}
 
 		void openShaderToolStripMenuItem_Click(object sender, EventArgs e)
