@@ -135,7 +135,7 @@
 			this.fpsLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.fpsLabel.AutoSize = true;
 			this.fpsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.fpsLabel.Location = new System.Drawing.Point(33, 619);
+			this.fpsLabel.Location = new System.Drawing.Point(11, 625);
 			this.fpsLabel.Name = "fpsLabel";
 			this.fpsLabel.Size = new System.Drawing.Size(67, 25);
 			this.fpsLabel.TabIndex = 3;
@@ -144,7 +144,7 @@
 			// startPauseButton
 			// 
 			this.startPauseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.startPauseButton.Location = new System.Drawing.Point(795, 619);
+			this.startPauseButton.Location = new System.Drawing.Point(773, 625);
 			this.startPauseButton.Name = "startPauseButton";
 			this.startPauseButton.Size = new System.Drawing.Size(81, 30);
 			this.startPauseButton.TabIndex = 8;
@@ -157,7 +157,7 @@
 			this.glControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.glControl1.BackColor = System.Drawing.Color.Black;
 			this.glControl1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-			this.glControl1.Location = new System.Drawing.Point(34, 37);
+			this.glControl1.Location = new System.Drawing.Point(12, 43);
 			this.glControl1.Name = "glControl1";
 			this.glControl1.Size = new System.Drawing.Size(1024, 576);
 			this.glControl1.TabIndex = 0;
@@ -169,7 +169,7 @@
 			// resetGlobalTimerButton
 			// 
 			this.resetGlobalTimerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.resetGlobalTimerButton.Location = new System.Drawing.Point(882, 619);
+			this.resetGlobalTimerButton.Location = new System.Drawing.Point(860, 625);
 			this.resetGlobalTimerButton.Name = "resetGlobalTimerButton";
 			this.resetGlobalTimerButton.Size = new System.Drawing.Size(75, 30);
 			this.resetGlobalTimerButton.TabIndex = 7;
@@ -180,7 +180,7 @@
 			// console
 			// 
 			this.console.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.console.Location = new System.Drawing.Point(34, 652);
+			this.console.Location = new System.Drawing.Point(12, 658);
 			this.console.Name = "console";
 			this.console.ReadOnly = true;
 			this.console.Size = new System.Drawing.Size(1024, 164);
@@ -192,7 +192,7 @@
 			// 
 			this.globalTimeTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.globalTimeTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.globalTimeTextBox.Location = new System.Drawing.Point(963, 619);
+			this.globalTimeTextBox.Location = new System.Drawing.Point(941, 625);
 			this.globalTimeTextBox.Name = "globalTimeTextBox";
 			this.globalTimeTextBox.ReadOnly = true;
 			this.globalTimeTextBox.Size = new System.Drawing.Size(86, 30);
@@ -201,9 +201,9 @@
 			// fragmentSourceEdit
 			// 
 			this.fragmentSourceEdit.Lexer = ScintillaNET.Lexer.Cpp;
-			this.fragmentSourceEdit.Location = new System.Drawing.Point(1079, 0);
+			this.fragmentSourceEdit.Location = new System.Drawing.Point(1076, 0);
 			this.fragmentSourceEdit.Name = "fragmentSourceEdit";
-			this.fragmentSourceEdit.Size = new System.Drawing.Size(825, 861);
+			this.fragmentSourceEdit.Size = new System.Drawing.Size(828, 861);
 			this.fragmentSourceEdit.TabIndex = 10;
 			this.fragmentSourceEdit.Text = "scintilla1";
 			this.fragmentSourceEdit.Visible = false;
