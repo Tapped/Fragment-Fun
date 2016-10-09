@@ -361,10 +361,9 @@ void main()
 				time += milliseconds / 1000;
 				CalculateFPS(milliseconds);
 				mFPSStopWatch.Restart();
-
-				glControl1.Invalidate();
 			}
 
+			glControl1.Invalidate();
 			globalTimeTextBox.Text = time.ToString("0.00");
 		}
 
